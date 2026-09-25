@@ -1,6 +1,4 @@
 const mongoose = require("mongoose");
-
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
 const questionSchema = new mongoose.Schema({
