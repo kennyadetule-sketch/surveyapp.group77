@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       return data;
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, "Unable to create account."));
+      throw new Error(error?.response?.data?.message || error?.message || "Unable to create account.");
     }
   };
 
