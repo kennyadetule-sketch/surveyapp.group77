@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { authService } from "../services/authService";
+import { getApiErrorMessage } from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -27,17 +28,25 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
-    const data = await authService.login(credentials);
-    localStorage.setItem("surveyhub-token", data.token);
-    setUser(data.user);
-    return data;
+    try {
+      const data = await authService.login(credentials);
+      localStorage.setItem("surveyhub-token", data.token);
+      setUser(data.user);
+      return data;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Unable to sign in."));
+    }
   };
 
   const register = async (credentials) => {
-    const data = await authService.register(credentials);
-    localStorage.setItem("surveyhub-token", data.token);
-    setUser(data.user);
-    return data;
+    try {
+      const data = await authService.register(credentials);
+      localStorage.setItem("surveyhub-token", data.token);
+      setUser(data.user);
+      return data;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, "Unable to create account."));
+    }
   };
 
   const updateProfile = async (payload) => {

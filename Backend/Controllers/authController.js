@@ -2,11 +2,18 @@ const User = require("../Models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const createToken = (user) => jwt.sign(
-  { id: user._id, role: user.role },
-  process.env.JWT_SECRET,
-  { expiresIn: "1h" }
-);
+const createToken = (user) => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT secret is not configured on the server.");
+  }
+
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    secret,
+    { expiresIn: "1h" }
+  );
+};
 
 const sanitizeUser = (user) => ({
   id: user._id,
