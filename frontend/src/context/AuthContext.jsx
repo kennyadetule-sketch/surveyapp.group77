@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { authService } from "../services/authService";
-import { getApiErrorMessage } from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -34,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       return data;
     } catch (error) {
-      throw new Error(getApiErrorMessage(error, "Unable to sign in."));
+      throw new Error(error?.response?.data?.message || error?.message || "Unable to sign in.");
     }
   };
 

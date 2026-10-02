@@ -16,7 +16,6 @@ import { surveyService } from './services/surveyService';
 import { responseService } from './services/responseService';
 import { resultService } from './services/resultService';
 import { questionService } from './services/questionService';
-import { getApiErrorMessage } from './services/api';
 
 const statusTone = {
   draft: 'slate',
@@ -477,7 +476,7 @@ function DashboardPage() {
       await surveyService.deleteSurvey(surveyId);
       setItems((current) => current.filter((item) => (item.id || item._id) !== surveyId));
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Unable to delete this survey.'));
+      setError(err?.response?.data?.message || err?.message || 'Unable to delete this survey.');
     }
   };
 
@@ -488,7 +487,7 @@ function DashboardPage() {
         const data = await surveyService.getSurveys();
         setItems(data);
       } catch (err) {
-        setError(getApiErrorMessage(err, 'Unable to load surveys.'));
+        setError(err?.response?.data?.message || err?.message || 'Unable to load surveys.');
       } finally {
         setLoading(false);
       }
