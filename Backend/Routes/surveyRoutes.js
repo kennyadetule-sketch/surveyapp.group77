@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const surveyController = require("../Controllers/surveyController");
-const { protect } = require("../Middleware/authMiddleware");
+const { protect } = require("../Middleware/AuthMiddleware");
 const resultController = require("../Controllers/resultController");
 
 //SURVEY ROUTES

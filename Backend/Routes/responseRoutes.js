@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const responseController = require("../Controllers/responseController");
-const { protect } = require("../Middleware/authMiddleware");
+const { protect } = require("../Middleware/AuthMiddleware");
 
 //RESPONSE ROUTES
 router.post("/", responseController.createResponse);

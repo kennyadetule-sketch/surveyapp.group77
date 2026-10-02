@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const questionController = require("../Controllers/questionController");
-const { protect } = require("../Middleware/authMiddleware");
+const { protect } = require("../Middleware/AuthMiddleware");
 
 //QUESTION ROUTES
 router.post("/", protect, questionController.createQuestion);
