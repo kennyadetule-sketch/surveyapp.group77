@@ -2,8 +2,19 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      dbName: process.env.MONGO_DB_NAME || "SurveyHub",
+    const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+    const mongoDbName =
+      process.env.MONGO_DB_NAME || process.env.MONGODB_NAME || "SurveyHub";
+
+    if (!mongoUri) {
+      console.error(
+        "MongoDB URI is missing. Set MONGO_URI or MONGODB_URI in the .env file."
+      );
+      return false;
+    }
+
+    const conn = await mongoose.connect(mongoUri, {
+      dbName: mongoDbName,
       serverSelectionTimeoutMS: 10000,
     });
 
