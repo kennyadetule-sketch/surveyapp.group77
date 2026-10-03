@@ -1,0 +1,1370 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SurveyHub API",
+    "description": "REST API documentation for the Survey and Feedback App \u2014 TS Academy Group77 Capstone Project.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://surveyhub-group77-backend.onrender.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User registration, login and profile management"
+    },
+    {
+      "name": "Surveys",
+      "description": "Create, read, update and delete surveys"
+    },
+    {
+      "name": "Questions",
+      "description": "Manage survey questions"
+    },
+    {
+      "name": "Responses",
+      "description": "Submit and retrieve survey responses"
+    },
+    {
+      "name": "Results",
+      "description": "Survey response summaries and analytics"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "creator",
+              "admin"
+            ],
+            "example": "creator"
+          },
+          "profileImage": {
+            "type": "string",
+            "example": "https://example.com/profile.jpg"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "$ref": "#/components/schemas/User"
+              },
+              "token": {
+                "type": "string",
+                "example": "eyJhbGciOiJIUzI1NiIs..."
+              }
+            }
+          }
+        }
+      },
+      "Survey": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "creator": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 150,
+            "example": "Customer Satisfaction Survey"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "example": "Tell us about your experience."
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "example": "public"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "closed"
+            ],
+            "example": "draft"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "coverImage": {
+            "type": "string",
+            "example": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Question": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "survey": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "short-text",
+              "long-text",
+              "multiple-choice",
+              "checkbox",
+              "yes-no",
+              "rating"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 300,
+            "example": "How satisfied are you with our service?"
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          },
+          "options": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        }
+      },
+      "ResponseAnswer": {
+        "type": "object",
+        "required": [
+          "question",
+          "answer"
+        ],
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "nullable": true
+          }
+        }
+      },
+      "SurveyResponse": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "survey": {
+            "type": "string"
+          },
+          "respondent": {
+            "type": "string",
+            "default": "Anonymous"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseAnswer"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "API health/welcome endpoint",
+        "responses": {
+          "200": {
+            "description": "API is running",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Welcome to the Survey and Feedback App API"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register a user",
+        "description": "Creates a creator account. Accepts JSON or multipart/form-data when uploading a profile image.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fullName",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "fullName": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "format": "password"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fullName",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "fullName": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "format": "password"
+                  },
+                  "profileImage": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Profile image upload failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login a user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email or password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get current user profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile retrieved",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "user": {
+                      "id": "USER_ID",
+                      "fullName": "John Doe",
+                      "email": "john@example.com",
+                      "role": "creator",
+                      "profileImage": ""
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/profile": {
+      "put": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Update current user profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6,
+                    "format": "password"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "profileImage": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Profile updated successfully."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Profile image upload failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/surveys": {
+      "post": {
+        "tags": [
+          "Surveys"
+        ],
+        "summary": "Create a survey",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "description"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 150
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "private"
+                    ],
+                    "default": "public"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "published",
+                      "closed"
+                    ],
+                    "default": "draft"
+                  },
+                  "coverImage": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Survey created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Survey created successfully."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Surveys"
+        ],
+        "summary": "Get surveys created by current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search title or description"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "published",
+                "closed"
+              ]
+            },
+            "description": "Filter by survey status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Surveys retrieved"
+          },
+          "401": {
+            "description": "Authentication failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/surveys/public/{id}": {
+      "get": {
+        "tags": [
+          "Surveys"
+        ],
+        "summary": "Get a public published survey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public survey retrieved"
+          },
+          "400": {
+            "description": "Invalid survey ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Survey not found or unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/surveys/{id}": {
+      "get": {
+        "tags": [
+          "Surveys"
+        ],
+        "summary": "Get a survey owned by current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Survey retrieved"
+          },
+          "400": {
+            "description": "Invalid survey ID"
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "404": {
+            "description": "Survey not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Surveys"
+        ],
+        "summary": "Update a survey",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 150
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "private"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "published",
+                      "closed"
+                    ]
+                  },
+                  "coverImage": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Survey updated"
+          },
+          "400": {
+            "description": "Invalid data or survey ID"
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "404": {
+            "description": "Survey not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Surveys"
+        ],
+        "summary": "Delete a survey",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Survey deleted"
+          },
+          "400": {
+            "description": "Invalid survey ID"
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "404": {
+            "description": "Survey not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/surveys/{surveyId}/results": {
+      "get": {
+        "tags": [
+          "Results"
+        ],
+        "summary": "Get summarized survey results",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "surveyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Results retrieved",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "totalResponses": 20,
+                    "completionRate": 100,
+                    "summaries": []
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "404": {
+            "description": "Survey not found"
+          },
+          "500": {
+            "description": "Error calculating survey results"
+          }
+        }
+      }
+    },
+    "/api/questions": {
+      "post": {
+        "tags": [
+          "Questions"
+        ],
+        "summary": "Create a survey question",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "surveyId",
+                  "questionText",
+                  "type"
+                ],
+                "properties": {
+                  "surveyId": {
+                    "type": "string"
+                  },
+                  "questionText": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "short-text",
+                      "long-text",
+                      "multiple-choice",
+                      "checkbox",
+                      "yes-no",
+                      "rating"
+                    ]
+                  },
+                  "options": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  },
+                  "required": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Question created"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "403": {
+            "description": "Question editing window restriction"
+          },
+          "404": {
+            "description": "Survey not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/questions/{id}": {
+      "put": {
+        "tags": [
+          "Questions"
+        ],
+        "summary": "Update a survey question",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "questionText": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "short-text",
+                      "long-text",
+                      "multiple-choice",
+                      "checkbox",
+                      "yes-no",
+                      "rating"
+                    ]
+                  },
+                  "options": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  },
+                  "required": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Question updated"
+          },
+          "400": {
+            "description": "Invalid question ID or validation error"
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "403": {
+            "description": "Permission/editing window restriction"
+          },
+          "404": {
+            "description": "Question not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Questions"
+        ],
+        "summary": "Delete a survey question",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Question deleted"
+          },
+          "400": {
+            "description": "Invalid question ID"
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "403": {
+            "description": "Permission/editing window restriction"
+          },
+          "404": {
+            "description": "Question not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/responses": {
+      "post": {
+        "tags": [
+          "Responses"
+        ],
+        "summary": "Submit a response to a public survey",
+        "description": "Anonymous respondents can submit answers to a published public survey.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "surveyId",
+                  "answers"
+                ],
+                "properties": {
+                  "surveyId": {
+                    "type": "string"
+                  },
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "example": {
+                      "QUESTION_ID": "Very Satisfied"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Response submitted"
+          },
+          "400": {
+            "description": "Invalid response or answer"
+          },
+          "404": {
+            "description": "Survey not found or not accepting responses"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/responses/survey/{surveyId}": {
+      "get": {
+        "tags": [
+          "Responses"
+        ],
+        "summary": "Get responses for a survey",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "surveyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Responses retrieved"
+          },
+          "401": {
+            "description": "Authentication failure"
+          },
+          "404": {
+            "description": "Survey not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    }
+  }
+}
