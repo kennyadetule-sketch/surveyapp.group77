@@ -33,14 +33,7 @@ exports.getResults = async (req, res) => {
       return { questionId: question._id, type: question.type, text: question.text, results: counts };
     });
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        totalResponses: responses.length,
-        completionRate: responses.length > 0 ? 100 : 0,
-        summaries,
-      },
-    });
+    
   } catch (error) {
     return res.status(500).json({ success: false, message: "Error calculating survey results." });
   }
