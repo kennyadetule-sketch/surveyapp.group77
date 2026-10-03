@@ -1,4 +1,5 @@
 const User = require("../Models/User");
+const { uploadImage } = require("../Config/Cloudinary");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -28,7 +29,21 @@ const sanitizeUser = (user) => ({
 exports.register = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
-    const profileImage = req.file?.path || req.body?.profileImage || "";
+    let profileImage = "";
+
+    if (req.file) {
+      try {
+        const uploadedImage = await uploadImage(req.file.buffer);
+        profileImage = uploadedImage.secure_url;
+      } catch (uploadError) {
+        console.error("Cloudinary registration upload error:", uploadError);
+
+        return res.status(502).json({
+          success: false,
+          message: "Profile picture upload failed. Please try again.",
+        });
+      }
+    }
 
     if (!fullName?.trim() || !email?.trim() || !password) {
       return res.status(400).json({ success: false, message: "Full name, email and password are required." });
@@ -129,7 +144,19 @@ exports.updateProfile = async (req, res) => {
       user.password = await bcrypt.hash(password, 10);
     }
 
-    if (req.file?.path) user.profileImage = req.file.path;
+    if (req.file) {
+      try {
+        const uploadedImage = await uploadImage(req.file.buffer);
+        user.profileImage = uploadedImage.secure_url;
+      } catch (uploadError) {
+        console.error("Cloudinary profile upload error:", uploadError);
+
+        return res.status(502).json({
+          success: false,
+          message: "Profile picture upload failed. Please try again.",
+        });
+      }
+    }
 
     await user.save();
     return res.status(200).json({

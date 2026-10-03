@@ -7,4 +7,35 @@ cloudinary.config({
   secure: true,
 });
 
-module.exports = cloudinary;
+const uploadImage = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "surveyhub/profile-images",
+        resource_type: "image",
+        transformation: [
+          {
+            width: 500,
+            height: 500,
+            crop: "fill",
+            gravity: "face",
+          },
+        ],
+      },
+      (error, result) => {
+        if (error) {
+          return reject(error);
+        }
+
+        resolve(result);
+      }
+    );
+
+    stream.end(buffer);
+  });
+};
+
+module.exports = {
+  cloudinary,
+  uploadImage,
+};

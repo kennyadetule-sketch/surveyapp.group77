@@ -11,7 +11,7 @@ const normalizedBaseUrl =
 
 export const api = axios.create({
   baseURL: normalizedBaseUrl,
-  timeout: 20000,
+  timeout: 60000,
 });
 
 api.interceptors.request.use((config) => {
