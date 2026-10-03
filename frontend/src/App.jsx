@@ -97,9 +97,10 @@ function HomePage() {
                   <Button variant="secondary">Learn More</Button>
                 </Link>
               </div>
-              <div className="mt-8 flex items-center gap-8 text-sm text-slate-500">
-                <span>15k+ responses</span>
-                <span>4.9/5 rating</span>
+              <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                <span className="rounded-full bg-slate-100 px-3 py-1">Multiple question types</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1">Real-time response collection</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1">Survey insights</span>
               </div>
             </div>
 
@@ -285,7 +286,7 @@ function LoginPage() {
               error={error && !form.password ? 'Password is required' : ''}
             />
 
-            <div className="flex items-center justify-between text-sm text-slate-600">
+            <div className="flex items-center text-sm text-slate-600">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -295,7 +296,6 @@ function LoginPage() {
                 />
                 Remember me
               </label>
-              <Link to="/forgot-password" className="text-blue-600 hover:underline">Forgot password?</Link>
             </div>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -1183,9 +1183,20 @@ function PublicSurveyPage() {
 
   useEffect(() => {
     const load = async () => {
-      const data = await surveyService.getSurvey(id, true);
-      setSurvey(data);
-      setLoading(false);
+      setLoading(true);
+      setError('');
+      try {
+        const data = await surveyService.getSurvey(id, true);
+        setSurvey(data);
+      } catch (err) {
+        setError(
+          err?.response?.data?.message ||
+          err?.message ||
+          'Unable to load this survey. Please try again.'
+        );
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [id]);
@@ -1235,6 +1246,7 @@ function PublicSurveyPage() {
   };
 
   if (loading) return <LoadingSpinner label="Loading survey..." />;
+  if (error) return <ErrorPage message={error} onRetry={() => window.location.reload()} />;
   if (!survey) return <ErrorPage message="This survey could not be found." />;
 
   return (
@@ -1414,7 +1426,7 @@ function ResponsesPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard label="Total responses" value={items.length} change="Submitted" accent="blue" />
         <StatCard label="Anonymous" value={items.filter((entry) => entry.respondent === 'Anonymous').length} change="No identity" accent="green" />
-        <StatCard label="Completion rate" value={`${Math.min(100, Math.round((items.length / Math.max(1, items.length || 1)) * 100))}%`} change="Live data" accent="purple" />
+        <StatCard label="Collection status" value={items.length > 0 ? 'Active' : 'No responses'} change="Response collection" accent="purple" />
       </div>
 
       <Card>
@@ -1449,18 +1461,29 @@ function ResponsesPage() {
 function ResultsPage() {
   const { id } = useParams();
   const [survey, setSurvey] = useState(null);
-  const [data, setData] = useState({ totalResponses: 0, completionRate: 0, summaries: [] });
+  const [data, setData] = useState({ totalResponses: 0, summaries: [] });
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const load = async () => {
-      const surveyData = await surveyService.getSurvey(id);
-      const results = await resultService.getResults(id);
-      setSurvey(surveyData);
-      setData(results);
+      setError('');
+      try {
+        const surveyData = await surveyService.getSurvey(id);
+        const results = await resultService.getResults(id);
+        setSurvey(surveyData);
+        setData(results);
+      } catch (err) {
+        setError(
+          err?.response?.data?.message ||
+          err?.message ||
+          'Unable to load survey results. Please try again.'
+        );
+      }
     };
     load();
   }, [id]);
 
+  if (error) return <ErrorPage message={error} onRetry={() => window.location.reload()} />;
   if (!survey) return <LoadingSpinner label="Loading results..." />;
 
   return (
@@ -1472,7 +1495,7 @@ function ResultsPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard label="Total responses" value={data.totalResponses} change="Collected" accent="blue" />
-        <StatCard label="Completion rate" value={`${data.completionRate}%`} change="Overall" accent="green" />
+        <StatCard label="Collection status" value={data.totalResponses > 0 ? 'Active' : 'No responses'} change="Response collection" accent="green" />
         <StatCard label="Questions" value={survey.questions?.length || 0} change="Analyzed" accent="purple" />
       </div>
 
@@ -1538,7 +1561,11 @@ function ProfilePage() {
       setNewPassword(''); setConfirmPassword(''); setProfileImage(null);
       setMessage('Profile updated successfully.');
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Unable to update your profile.'));
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        'Unable to update your profile.'
+      );
     } finally { setSaving(false); }
   };
 
